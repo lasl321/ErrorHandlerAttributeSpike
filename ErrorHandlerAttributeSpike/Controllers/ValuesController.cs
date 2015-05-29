@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Web.Http;
 
 namespace ErrorHandlerAttributeSpike.Controllers
@@ -12,22 +10,28 @@ namespace ErrorHandlerAttributeSpike.Controllers
         // GET api/values
         public IEnumerable<string> Get()
         {
-            return new string[] { "value1", "value2" };
+            return new[] {"value1", "value2"};
         }
 
         // GET api/values/5
-        public string Get(int id)
+        [MyActionErrorHandler(typeof(InvalidOperationException), HttpStatusCode.BadRequest)]
+        [MyActionErrorHandler(typeof(InvalidCastException), HttpStatusCode.NotFound)]
+        public int Get(int id)
         {
-            return "value";
+            if (id == 111) throw new InvalidOperationException("Invalid operation");
+            if (id == 222) throw new InvalidCastException("Invalid cast");
+            if (id == 666) throw new Exception("Generic error");
+
+            return id;
         }
 
         // POST api/values
-        public void Post([FromBody]string value)
+        public void Post([FromBody] string value)
         {
         }
 
         // PUT api/values/5
-        public void Put(int id, [FromBody]string value)
+        public void Put(int id, [FromBody] string value)
         {
         }
 
@@ -35,5 +39,17 @@ namespace ErrorHandlerAttributeSpike.Controllers
         public void Delete(int id)
         {
         }
+    }
+
+    [Serializable]
+    public class MyException : Exception
+    {
+        public MyException(HttpStatusCode statusCode) :
+            base(string.Format("Status code: {0}", statusCode))
+        {
+            StatusCode = statusCode;
+        }
+
+        public HttpStatusCode StatusCode { get; private set; }
     }
 }
